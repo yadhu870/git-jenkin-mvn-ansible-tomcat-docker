@@ -1,0 +1,42 @@
+---
+- name: deploy web application to multiple containers
+  hosts: all
+  become: yes
+  remote_user: root
+  tasks:
+    - name: Stop Tomcat container
+      docker_container:
+        name: Tomcat
+        state: stopped
+
+    - name: Remove container Tomcat container
+      docker_container:
+        name: Tomcat
+        state: absent
+
+    - name: Remove Tomcat image
+      docker_image:
+        name: yadhu870/tomcat
+        tag: latest
+        state: absent
+    - name: Copy webapps.war to the webapps directory
+      copy:
+        src: ~/workspace/git-jenkins-ansible-docker/target/webapp.war
+        dest: /root/tomcat-docker/webapps/webapp.war
+
+    - name: Pull Tomcat Docker image
+      docker_image:
+        name: yadhu870/tomcat
+        tag: latest
+        source: pull
+
+    - name: Run docker image
+      docker_container:
+        name: Tomcat
+        image: yadhu870/tomcat:latest
+        state: started
+        ports:
+          - "8080:8080"
+        volumes:
+          - ~/tomcat-docker/conf:/usr/local/tomcat/conf
+          - ~/tomcat-docker/webapps:/usr/local/tomcat/webapps
